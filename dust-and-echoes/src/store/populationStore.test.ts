@@ -439,10 +439,11 @@ describe('Property 6: Worker Slot Calculation', () => {
   });
 
   /**
-   * Property 6.6: Zero level means zero slots
-   * When building level is 0 (not built), job should have 0 slots
+   * Property 6.6: Base slots without building
+   * Basic jobs have base slots even when building level is 0 (not built)
+   * water_collector/hunter: 2 base slots, scavenger: 3 base slots
    */
-  it('should return 0 slots when building level is 0', () => {
+  it('should return base slots when building level is 0', () => {
     fc.assert(
       fc.property(
         fc.constantFrom<JobId>('water_collector', 'hunter', 'scavenger'),
@@ -453,7 +454,9 @@ describe('Property 6: Worker Slot Calculation', () => {
           // Building level defaults to 0 (not built)
           const jobSlots = store.getJobMaxSlots(jobId);
           
-          expect(jobSlots).toBe(0);
+          // Base slots: scavenger=3, others=2
+          const expectedSlots = jobId === 'scavenger' ? 3 : 2;
+          expect(jobSlots).toBe(expectedSlots);
           return true;
         }
       ),
@@ -1554,10 +1557,11 @@ describe('Property 4: Job Slot Validation', () => {
   });
 
   /**
-   * Property 4.3: Assignment fails when building not built
-   * When the required building is not built (level 0), assignment should fail
+   * Property 4.3: Basic jobs have base slots without buildings
+   * Basic jobs (scavenger, water_collector, hunter) should have base slots even without buildings
+   * Buildings provide additional slots and efficiency bonuses
    */
-  it('should fail assignment when required building is not built', () => {
+  it('should provide base slots for basic jobs without buildings', () => {
     fc.assert(
       fc.property(
         fc.constantFrom<JobId>('scavenger', 'water_collector', 'hunter'),
@@ -1568,22 +1572,24 @@ describe('Property 4: Job Slot Validation', () => {
           // Don't build any buildings - all levels are 0
           store.setPopulationCap(10);
           
-          // Max slots should be 0 when building not built
+          // Basic jobs should have base slots even without buildings
+          // scavenger: 3 base slots, water_collector/hunter: 2 base slots
           const maxSlots = store.getJobMaxSlots(jobId);
-          expect(maxSlots).toBe(0);
+          const expectedSlots = jobId === 'scavenger' ? 3 : 2;
+          expect(maxSlots).toBe(expectedSlots);
           
-          // Job should be considered full (0 slots available)
-          expect(store.isJobFull(jobId)).toBe(true);
+          // Job should not be full initially
+          expect(store.isJobFull(jobId)).toBe(false);
           
-          // Add a worker and try to assign - should fail
+          // Add a worker and try to assign - should succeed
           const worker = store.addWorker('Test Worker');
           if (worker) {
             const success = store.assignJob(worker.id, jobId);
-            expect(success).toBe(false);
+            expect(success).toBe(true);
             
-            // Worker should remain unassigned
+            // Worker should be assigned
             const updatedWorker = store.getWorker(worker.id);
-            expect(updatedWorker?.job).toBeNull();
+            expect(updatedWorker?.job).toBe(jobId);
           }
           
           return true;

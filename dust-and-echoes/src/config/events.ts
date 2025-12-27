@@ -254,7 +254,7 @@ export const EVENTS: GameEvent[] = [
     conditions: [
       { type: 'bonfire_lit' },
       { type: 'population_space' },
-      { type: 'random', probability: 0.2 },
+      { type: 'random', probability: 0.25 },
     ],
     choices: [
       {
@@ -298,7 +298,7 @@ export const EVENTS: GameEvent[] = [
       { type: 'bonfire_lit' },
       { type: 'population_space' },
       { type: 'day_range', minDay: 5 },
-      { type: 'random', probability: 0.1 },
+      { type: 'random', probability: 0.15 },
     ],
     choices: [
       {
@@ -334,6 +334,264 @@ export const EVENTS: GameEvent[] = [
     priority: 6,
     repeatable: true,
     cooldownDays: 3,
+  },
+  {
+    id: 'wanderer_trader',
+    type: 'wanderer_arrival',
+    name: 'Wandering Trader',
+    nameZh: '流浪商人',
+    description: 'A wandering trader passes by your camp, offering to barter goods.',
+    descriptionZh: '一个流浪商人路过你的营地，愿意以物易物。',
+    conditions: [
+      { type: 'random', probability: 0.2 },
+    ],
+    choices: [
+      {
+        id: 'trade_scrap_for_water',
+        text: 'Trade 10 scrap for 3 water',
+        textZh: '用10废料换3净水',
+        conditions: [{ type: 'resource_high', resourceId: 'scrap', resourceThreshold: 10 }],
+        outcomes: [
+          {
+            resourceChanges: [
+              { resourceId: 'scrap', amount: -10 },
+              { resourceId: 'water', amount: 3 },
+            ],
+            description: 'You trade scrap for clean water.',
+            descriptionZh: '你用废料换取了净水。',
+          },
+        ],
+      },
+      {
+        id: 'trade_scrap_for_food',
+        text: 'Trade 10 scrap for 3 food',
+        textZh: '用10废料换3食物',
+        conditions: [{ type: 'resource_high', resourceId: 'scrap', resourceThreshold: 10 }],
+        outcomes: [
+          {
+            resourceChanges: [
+              { resourceId: 'scrap', amount: -10 },
+              { resourceId: 'food', amount: 3 },
+            ],
+            description: 'You trade scrap for food.',
+            descriptionZh: '你用废料换取了食物。',
+          },
+        ],
+      },
+      {
+        id: 'trade_wood_for_metal',
+        text: 'Trade 8 wood for 2 metal',
+        textZh: '用8木材换2金属',
+        conditions: [{ type: 'resource_high', resourceId: 'wood', resourceThreshold: 8 }],
+        outcomes: [
+          {
+            resourceChanges: [
+              { resourceId: 'wood', amount: -8 },
+              { resourceId: 'metal', amount: 2 },
+            ],
+            description: 'You trade wood for metal.',
+            descriptionZh: '你用木材换取了金属。',
+          },
+        ],
+      },
+      {
+        id: 'decline_trade',
+        text: 'Decline to trade',
+        textZh: '拒绝交易',
+        outcomes: [
+          {
+            description: 'The trader moves on.',
+            descriptionZh: '商人继续赶路了。',
+          },
+        ],
+      },
+    ],
+    priority: 4,
+    repeatable: true,
+    cooldownDays: 1,
+  },
+  {
+    id: 'wanderer_group',
+    type: 'wanderer_arrival',
+    name: 'Survivor Group',
+    nameZh: '幸存者小队',
+    description: 'A small group of survivors approaches, looking for a place to stay.',
+    descriptionZh: '一小群幸存者走来，寻找落脚之处。',
+    conditions: [
+      { type: 'bonfire_lit' },
+      { type: 'population_space' },
+      { type: 'day_range', minDay: 3 },
+      { type: 'random', probability: 0.12 },
+    ],
+    choices: [
+      {
+        id: 'welcome_all',
+        text: 'Welcome them all (need 2 population space)',
+        textZh: '全部接纳（需要2人口空间）',
+        outcomes: [
+          {
+            populationChange: 2,
+            moraleChange: 2,
+            resourceChanges: [{ resourceId: 'food', amount: -4 }],
+            description: 'The group joins your settlement. They need food to recover.',
+            descriptionZh: '这群人加入了你的定居点。他们需要食物恢复体力。',
+          },
+        ],
+      },
+      {
+        id: 'welcome_one',
+        text: 'Accept only one',
+        textZh: '只接纳一人',
+        outcomes: [
+          {
+            populationChange: 1,
+            moraleChange: -1,
+            description: 'You accept one survivor. The others leave disappointed.',
+            descriptionZh: '你接纳了一名幸存者。其他人失望地离开了。',
+          },
+        ],
+      },
+      {
+        id: 'turn_away',
+        text: 'Turn them away',
+        textZh: '拒绝他们',
+        outcomes: [
+          {
+            moraleChange: -2,
+            description: 'You turn the group away. Your people are troubled.',
+            descriptionZh: '你拒绝了这群人。你的人感到不安。',
+          },
+        ],
+      },
+    ],
+    priority: 5,
+    repeatable: true,
+    cooldownDays: 2,
+  },
+  {
+    id: 'wanderer_injured',
+    type: 'wanderer_arrival',
+    name: 'Injured Survivor',
+    nameZh: '受伤的幸存者',
+    description: 'An injured survivor stumbles into your camp, barely conscious.',
+    descriptionZh: '一个受伤的幸存者跌跌撞撞地走进营地，几乎失去意识。',
+    conditions: [
+      { type: 'population_space' },
+      { type: 'random', probability: 0.15 },
+    ],
+    choices: [
+      {
+        id: 'help_with_meds',
+        text: 'Use medicine to help (1 meds)',
+        textZh: '用药物救治（消耗1药品）',
+        conditions: [{ type: 'resource_high', resourceId: 'meds', resourceThreshold: 1 }],
+        outcomes: [
+          {
+            populationChange: 1,
+            moraleChange: 2,
+            resourceChanges: [{ resourceId: 'meds', amount: -1 }],
+            description: 'You save the survivor. They are grateful and join your settlement.',
+            descriptionZh: '你救活了幸存者。他们非常感激并加入了定居点。',
+          },
+        ],
+      },
+      {
+        id: 'help_without_meds',
+        text: 'Try to help without medicine',
+        textZh: '尝试不用药物救治',
+        outcomes: [
+          {
+            populationChange: 1,
+            moraleChange: 1,
+            description: 'The survivor recovers slowly but joins your settlement.',
+            descriptionZh: '幸存者慢慢恢复并加入了定居点。',
+          },
+          {
+            moraleChange: -1,
+            description: 'Despite your efforts, the survivor does not make it.',
+            descriptionZh: '尽管你尽力了，幸存者还是没能挺过来。',
+          },
+        ],
+        outcomeWeights: [0.5, 0.5],
+      },
+      {
+        id: 'turn_away',
+        text: 'Cannot help them',
+        textZh: '无法帮助他们',
+        outcomes: [
+          {
+            moraleChange: -2,
+            description: 'You leave the survivor to their fate. Your people are disturbed.',
+            descriptionZh: '你让幸存者听天由命。你的人感到不安。',
+          },
+        ],
+      },
+    ],
+    priority: 5,
+    repeatable: true,
+    cooldownDays: 2,
+  },
+  {
+    id: 'wanderer_with_supplies',
+    type: 'wanderer_arrival',
+    name: 'Survivor with Supplies',
+    nameZh: '带补给的幸存者',
+    description: 'A survivor arrives carrying valuable supplies, willing to trade or join.',
+    descriptionZh: '一个幸存者带着宝贵的补给到来，愿意交易或加入。',
+    conditions: [
+      { type: 'day_range', minDay: 2 },
+      { type: 'random', probability: 0.15 },
+    ],
+    choices: [
+      {
+        id: 'recruit',
+        text: 'Recruit them (they keep half supplies)',
+        textZh: '招募他们（他们保留一半补给）',
+        conditions: [{ type: 'population_space' }],
+        outcomes: [
+          {
+            populationChange: 1,
+            resourceChanges: [
+              { resourceId: 'water', amount: 2 },
+              { resourceId: 'food', amount: 2 },
+            ],
+            description: 'The survivor joins with some supplies.',
+            descriptionZh: '幸存者带着一些补给加入了。',
+          },
+        ],
+      },
+      {
+        id: 'trade_supplies',
+        text: 'Trade: give 15 scrap for all supplies',
+        textZh: '交易：用15废料换取全部补给',
+        conditions: [{ type: 'resource_high', resourceId: 'scrap', resourceThreshold: 15 }],
+        outcomes: [
+          {
+            resourceChanges: [
+              { resourceId: 'scrap', amount: -15 },
+              { resourceId: 'water', amount: 5 },
+              { resourceId: 'food', amount: 5 },
+            ],
+            description: 'You trade scrap for their supplies.',
+            descriptionZh: '你用废料换取了他们的补给。',
+          },
+        ],
+      },
+      {
+        id: 'let_go',
+        text: 'Let them pass',
+        textZh: '让他们离开',
+        outcomes: [
+          {
+            description: 'The survivor continues on their way.',
+            descriptionZh: '幸存者继续赶路了。',
+          },
+        ],
+      },
+    ],
+    priority: 4,
+    repeatable: true,
+    cooldownDays: 1,
   },
 
   // ============================================

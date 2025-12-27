@@ -131,9 +131,48 @@
     - **Property 10: Building-Dependent System Sync**
     - **Validates: Requirements 6.1, 6.2, 6.3, 6.4**
 
-- [ ] 9. Final Checkpoint - 确保所有测试通过
+- [x] 9. Final Checkpoint - 确保所有测试通过
   - 运行完整测试套件
   - 如有问题请询问用户
+
+- [x] 10. 修复T1地图访问Bug
+  - [x] 10.1 修复 MapView.tsx 中的T1访问逻辑
+    - 移除 radioTowerLevel === 0 时显示"需要建造无线电塔"的错误提示
+    - 改为显示"可探索近郊区域 (T1)，建造无线电塔解锁更远区域"
+    - _Requirements: 1.2, 1.4_
+  - [x] 10.2 在游戏初始化时发现T1节点
+    - 在 initializeNewGame 中自动发现所有T1区域节点
+    - 确保玩家开局即可看到并探索T1区域
+    - _Requirements: 1.1, 1.3_
+
+- [x] 11. 修复岗位系统（无建筑可工作，有建筑加成）
+  - [x] 11.1 修改 populationStore 的 getJobMaxSlots 函数
+    - 基础岗位（集水者、猎人、拾荒者）无需建筑即可工作
+    - 无建筑时提供基础槽位：集水者/猎人 2个，拾荒者 3个
+    - 有建筑时使用公式：2 + 2L（集水者/猎人）或 3 + 3L（拾荒者）
+    - _Requirements: 3.1, 3.2, 3.5_
+  - [x] 11.2 更新相关测试
+    - 更新 populationStore.test.ts 中的岗位槽位测试
+    - 更新 gameIntegration.test.ts 中的建筑-岗位集成测试
+    - _Requirements: 3.3, 3.4_
+
+- [x] 12. 添加人员来访事件
+  - [x] 12.1 添加流浪商人事件（以物易物）
+    - 可用废料换取水/食物
+    - 可用木材换取金属
+    - _Requirements: 7.3_
+  - [x] 12.2 添加幸存者小队事件
+    - 可招募多人（需要人口空间）
+    - 提供不同选择（全部接纳/部分接纳/拒绝）
+    - _Requirements: 7.1, 7.2_
+  - [x] 12.3 添加受伤幸存者事件
+    - 可用药品救治（高成功率）
+    - 可不用药品救治（50%成功率）
+    - _Requirements: 7.1_
+  - [x] 12.4 添加带补给幸存者事件
+    - 可招募并获得部分补给
+    - 可交易获得全部补给
+    - _Requirements: 7.1, 7.3_
 
 ## Notes
 

@@ -257,13 +257,11 @@ export function MapView({ onExplore, className = '' }: MapViewProps) {
       
       {/* 节点列表 */}
       <div className="flex-1 overflow-y-auto p-2 sm:p-3 overscroll-contain">
-        {radioTowerLevel === 0 ? (
+        {sortedNodes.length === 0 ? (
           <div className="text-center text-terminal-dim text-xs sm:text-sm py-3 sm:py-4">
-            需要建造无线电塔才能探索
-          </div>
-        ) : sortedNodes.length === 0 ? (
-          <div className="text-center text-terminal-dim text-xs sm:text-sm py-3 sm:py-4">
-            没有可显示的区域
+            {radioTowerLevel === 0 
+              ? '可探索近郊区域 (T1)，建造无线电塔解锁更远区域'
+              : '没有可显示的区域'}
           </div>
         ) : (
           sortedNodes.map(node => (

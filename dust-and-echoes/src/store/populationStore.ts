@@ -530,7 +530,9 @@ export const usePopulationStore = create<PopulationStore>((set, get) => ({
     
     const level = state.buildingLevels[buildingId] ?? 0;
     if (level === 0) {
-      return 0; // 建筑未建造
+      // 基础岗位无需建筑也可工作，提供基础槽位
+      // 集水者/猎人: 2 基础槽位, 拾荒者: 3 基础槽位
+      return jobId === 'scavenger' ? 3 : 2;
     }
     
     return getMaxJobSlots(jobId, level);

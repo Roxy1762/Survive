@@ -300,6 +300,12 @@ export function initializeNewGame(difficulty?: DifficultyLevel, scenarioId?: str
   populationStore.setPopulationCap(Math.max(2, scenario.startingWorkers + 1));
   
   // 探索地图已在 resetExploration 中初始化为默认节点
+  // 发现 T1 近郊区域节点（距离 1-2），无需电塔即可探索
+  const explorationStore = useExplorationStore.getState();
+  const t1Nodes = explorationStore.mapNodes.filter(n => n.tier === 'T1');
+  for (const node of t1Nodes) {
+    explorationStore.discoverNode(node.id);
+  }
   
   // 添加欢迎事件
   useEventStore.getState().addSystemMessage(

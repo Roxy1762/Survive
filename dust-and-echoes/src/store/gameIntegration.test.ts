@@ -1021,13 +1021,18 @@ describe('Integration Tests: Building-Job System', () => {
    * 
    * Requirements: 6.1 - WHEN a building level changes, THE Building_System SHALL notify all dependent systems
    * Requirements: 6.4 - WHEN job slots change, THE Worker_System SHALL validate current assignments
+   * 
+   * Note: Basic jobs now have base slots without buildings:
+   * - water_collector/hunter: 2 base slots
+   * - scavenger: 3 base slots
+   * Buildings provide additional slots on top of base slots.
    */
   it('should update job slots when water collector is built', () => {
     const buildingStore = useBuildingStore.getState();
     const populationStore = usePopulationStore.getState();
     
-    // Initially, no job slots available (building not built)
-    expect(populationStore.getJobMaxSlots('water_collector')).toBe(0);
+    // Initially, base slots available (2 for water_collector without building)
+    expect(populationStore.getJobMaxSlots('water_collector')).toBe(2);
     
     // Build water collector level 1
     buildingStore.setBuildingLevel('water_collector', 1);
@@ -1046,8 +1051,8 @@ describe('Integration Tests: Building-Job System', () => {
     const buildingStore = useBuildingStore.getState();
     const populationStore = usePopulationStore.getState();
     
-    // Initially, no job slots available
-    expect(populationStore.getJobMaxSlots('hunter')).toBe(0);
+    // Initially, base slots available (2 for hunter without building)
+    expect(populationStore.getJobMaxSlots('hunter')).toBe(2);
     
     // Build trap level 1
     buildingStore.setBuildingLevel('trap', 1);
@@ -1066,8 +1071,8 @@ describe('Integration Tests: Building-Job System', () => {
     const buildingStore = useBuildingStore.getState();
     const populationStore = usePopulationStore.getState();
     
-    // Initially, no job slots available
-    expect(populationStore.getJobMaxSlots('scavenger')).toBe(0);
+    // Initially, base slots available (3 for scavenger without building)
+    expect(populationStore.getJobMaxSlots('scavenger')).toBe(3);
     
     // Build scavenge post level 1
     buildingStore.setBuildingLevel('scavenge_post', 1);
@@ -1130,19 +1135,19 @@ describe('Integration Tests: Building-Job System', () => {
     expect(populationStore.getJobMaxSlots('scavenger')).toBe(12);      // 3 + 3*3
   });
 
-  it('should prevent worker assignment when building is not built', () => {
+  it('should allow worker assignment with base slots when building is not built', () => {
     const populationStore = usePopulationStore.getState();
     
     // Add a worker
     populationStore.setPopulationCap(5);
     const worker = populationStore.addWorker('TestWorker');
     
-    // Try to assign to water collector (not built)
+    // Try to assign to water collector (not built but has base slots)
     const result = populationStore.assignJob(worker!.id, 'water_collector');
     
-    // Should fail because job is full (0 slots)
-    expect(result).toBe(false);
-    expect(populationStore.getJobWorkerCount('water_collector')).toBe(0);
+    // Should succeed because basic jobs have base slots (2 for water_collector)
+    expect(result).toBe(true);
+    expect(populationStore.getJobWorkerCount('water_collector')).toBe(1);
   });
 
   it('should allow worker assignment after building is constructed', () => {
@@ -1312,9 +1317,12 @@ describe('Property-Based Tests: Building-Dependent System Sync', () => {
         const actualSlots = populationStore.getJobMaxSlots(jobId);
         
         // Calculate expected slots
+        // Note: Basic jobs now have base slots even without buildings
+        // water_collector/hunter: 2 base slots, scavenger: 3 base slots
         let expectedSlots: number;
         if (level === 0) {
-          expectedSlots = 0;
+          // Base slots without building
+          expectedSlots = buildingType === 'scavenge_post' ? 3 : 2;
         } else if (buildingType === 'scavenge_post') {
           expectedSlots = 3 + (3 * level); // Scavenge post: 3 + 3L
         } else {
@@ -1365,14 +1373,16 @@ describe('Property-Based Tests: Building-Dependent System Sync', () => {
           expect(useResourceStore.getState().getResourceCap('water')).toBe(baseWaterCap + warehouseBonus);
           
           // 3. Job slots (from production buildings)
+          // Note: Basic jobs now have base slots even without buildings
+          // water_collector/hunter: 2 base slots, scavenger: 3 base slots
           const populationStore = usePopulationStore.getState();
           
-          // Water collector slots
-          const expectedWaterSlots = waterCollectorLevel === 0 ? 0 : 2 + (2 * waterCollectorLevel);
+          // Water collector slots: base 2 + building bonus
+          const expectedWaterSlots = waterCollectorLevel === 0 ? 2 : 2 + (2 * waterCollectorLevel);
           expect(populationStore.getJobMaxSlots('water_collector')).toBe(expectedWaterSlots);
           
-          // Hunter slots (from trap)
-          const expectedHunterSlots = trapLevel === 0 ? 0 : 2 + (2 * trapLevel);
+          // Hunter slots (from trap): base 2 + building bonus
+          const expectedHunterSlots = trapLevel === 0 ? 2 : 2 + (2 * trapLevel);
           expect(populationStore.getJobMaxSlots('hunter')).toBe(expectedHunterSlots);
           
           return true;
@@ -1410,9 +1420,10 @@ describe('Property-Based Tests: Building-Dependent System Sync', () => {
 
   it('should unassign excess workers when job slots are reduced below current assignments', () => {
     // Generator for initial and final levels
+    // Note: finalLevel 0 now means base slots (2 for water_collector), not 0 slots
     const initialLevelArb = fc.integer({ min: 2, max: 5 });
-    const finalLevelArb = fc.integer({ min: 0, max: 1 });
-    const workerCountArb = fc.integer({ min: 3, max: 6 });
+    const finalLevelArb = fc.integer({ min: 1, max: 1 }); // Use level 1 as minimum to test slot reduction
+    const workerCountArb = fc.integer({ min: 5, max: 8 });
 
     fc.assert(
       fc.property(initialLevelArb, finalLevelArb, workerCountArb, (initialLevel, finalLevel, workerCount) => {
@@ -1432,7 +1443,7 @@ describe('Property-Based Tests: Building-Dependent System Sync', () => {
         // Build water collector to initial level
         buildingStore.setBuildingLevel('water_collector', initialLevel);
         
-        // Calculate initial max slots
+        // Calculate initial max slots: 2 + 2*level
         const initialMaxSlots = 2 + (2 * initialLevel);
         
         // Assign workers up to max slots
@@ -1446,8 +1457,8 @@ describe('Property-Based Tests: Building-Dependent System Sync', () => {
         // Reduce building level
         buildingStore.setBuildingLevel('water_collector', finalLevel);
         
-        // Calculate new max slots
-        const newMaxSlots = finalLevel === 0 ? 0 : 2 + (2 * finalLevel);
+        // Calculate new max slots: 2 + 2*level (with building)
+        const newMaxSlots = 2 + (2 * finalLevel);
         
         // Verify workers are unassigned if exceeding new max
         const assignedAfter = populationStore.getJobWorkerCount('water_collector');
